@@ -3,8 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
-  ObjectId,
-  ObjectIdColumn,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { lowercase } from './ValueTransformers';
@@ -16,8 +15,8 @@ export enum Role {
 
 @Entity()
 export class User {
-  @ObjectIdColumn()
-  public id: ObjectId;
+   @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
   @Column()
   public name: string;

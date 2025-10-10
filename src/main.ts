@@ -16,15 +16,6 @@ async function main() {
     console.log('Express app closed.');
     process.exit(0);
   });
-
-  // app.listen(config.port, '0.0.0.0', (err: any) => {
-  //   if (err) {
-  //     console.log(err);
-  //     process.exit(1);
-  //     return;
-  //   }
-  //   console.log(`Server listening on port: ${config.port}`);
-  // });
 }
 
 main();

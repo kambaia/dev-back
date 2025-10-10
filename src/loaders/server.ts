@@ -1,50 +1,56 @@
-import bodyParser from 'body-parser';
-import { errors, celebrate, isCelebrateError } from 'celebrate';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import * as express from 'express';
 import helmet from 'helmet';
+import { errors, isCelebrateError, CelebrateError } from 'celebrate';
 import routes from '../api/routes';
+import { SolicitacaoController } from '../controllers/solicitacao.controller';
 
+const solicitacaoController = new SolicitacaoController();
 export default (app: express.Application) => {
+  // 🧠 Configurações básicas
   app.enable('trust proxy');
   app.use(cors());
   app.use(helmet());
-  app.use(bodyParser.json());
-  app.use(errors());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
-  app.use('/api', routes);
+  // 🚀 Rotas principais
+  app.use('/api/v1', routes);
 
-  /// catch 404 and forward to error handler
-  app.use((req, res, next) => {
-    const error: Error = new Error('Not Found');
-    error['status'] = 404;
-    next(error);
-  });
-
-  /// error handlers
-  app.use((err, req, res, next) => {
-    /**
-     * Handle 401 thrown by express-jwt library
-     */
-    if (err.name === 'UnauthorizedError') {
-      return res.status(err.status).send({ message: err.message }).end();
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    // Erro JWT (Unauthorized)
+    if (err.name === 'UnauthorizedError' && err.status) {
+      return res.status(err.status).json({ message: err.message });
     }
 
-    /**
-     * Handle validation error thrown by Celebrate + Joi
-     */
+    // Erro do Celebrate (validação)
     if (isCelebrateError(err)) {
-      return res.status(422).send({ message: err.message, details: err.details }).end();
+      const details: Record<string, any> = {};
+      err.details.forEach((detail, key) => {
+        details[key] = detail.details.map((d) => d.message);
+      });
+
+      return res.status(422).json({
+        message: 'Erro de validação',
+        details,
+      });
     }
-    return next(err);
+
+    next(err);
   });
 
-  app.use((err, req, res, next) => {
-    res.status(err.status || 500);
-    res.json({
-      errors: {
-        message: err.message,
-      },
+  // 🧱 Middleware final de erro (global)
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error('❌ Erro interno:', err);
+
+    const statusCode = err.status || 500;
+    const message = err.message || 'Erro interno do servidor';
+
+    res.status(statusCode).json({
+      errors: { message },
     });
   });
+
+  // 🧹 Tratamento dos erros do Celebrate (deve vir no fim)
+  app.use(errors());
 };

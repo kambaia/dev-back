@@ -1,28 +1,22 @@
-version: '3.7'
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
     environment:
-      - PORT=8080
-      - JWT_SECRET=secret
-      - TYPEORM_CONNECTION=mongodb
-      - TYPEORM_HOST=mongodb
-      - TYPEORM_PORT=27017
-      - TYPEORM_DATABASE=test
-    ports:
-      - "8080:8080"
-    links:
-      - mongodb
-    networks:
-      - internal
-      
-  mongodb:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    networks:
-      - internal
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:2212@postgres:5432/test
+    restart: always
 
-networks:
-  internal:
-    driver: bridge
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2212
+      - POSTGRES_DB=test
+    ports:
+      - "5432:5432"
