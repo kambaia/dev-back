@@ -12,7 +12,9 @@ export class AprovacaoController {
     iniciarFluxoAprovacao = async (req: Request, res: Response): Promise<void> => {
         try {
             const aprovacao = req.body;
-            await this.aprovacaoService.iniciarFluxoAprovacao(aprovacao);
+            const aprovacaoId = req.params.aprovacaoId;
+
+            await this.aprovacaoService.iniciarFluxoAprovacao(aprovacaoId, aprovacao);
             res.status(200).json({
                 success: true,
                 message: 'Fluxo de aprovação iniciado com sucesso'

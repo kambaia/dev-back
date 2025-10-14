@@ -8,7 +8,7 @@ import { Solicitacao } from '../models/Solicitacao';
 import { CampoSolicitacao } from '../models/CampoSolicitacao';
 import { MaterialSolicitacao } from '../models/MaterialSolicitacao';
 import { ValorSolicitacao } from '../models/ValorSolicitacao';
-import { Balcoes } from '../models/Balcao';
+import { Balcao } from '../models/Balcao';
 import { AprovacaoSolicitacao } from '../models/AprovacaoSolicitacao';
 import { seedTiposSolicitacao } from '../seeds/seedTiposSolicitacao';
 
@@ -30,7 +30,7 @@ export const AppDataSource = new DataSource({
     CampoSolicitacao,
     ValorSolicitacao,
     MaterialSolicitacao,
-    Balcoes,
+    Balcao,
     AprovacaoSolicitacao,
   ],
   migrations: ['src/migrations/*.ts'],

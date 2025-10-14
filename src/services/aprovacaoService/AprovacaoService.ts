@@ -12,7 +12,7 @@ export class AprovacaoService {
     /**
      * Iniciar fluxo de aprovação para uma solicitação
      */
-    async iniciarFluxoAprovacao(aprovacaoData: AprovacaoDTO): Promise<void> {
+    async iniciarFluxoAprovacao(aprovacaoId: string, aprovacaoData: AprovacaoDTO): Promise<void> {
         const solicitacao = await this.solicitacaoRepo.findOne({
             where: { id: aprovacaoData.solicitacaoId }
         });
@@ -20,12 +20,15 @@ export class AprovacaoService {
         if (!solicitacao) {
             throw new Error('Solicitação não encontrada');
         }
-        const aprovacao = new AprovacaoSolicitacao();
-        aprovacao.solicitacaoId = aprovacaoData.solicitacaoId;
-        aprovacao.usuarioAprovadorId = aprovacaoData.usuarioAprovadorId;
-        aprovacao.status = StatusAprovacao.PENDENTE;
-        aprovacao.observacoes = aprovacaoData.observacoes ?? ''
-        await this.aprovacaoRepo.save(aprovacao);
+        console.log(aprovacaoData);
+
+        await this.aprovacaoRepo.update(
+            { id: aprovacaoId }, // condição
+            {
+                status: aprovacaoData.status,
+                observacoes: aprovacaoData.observacoes ?? ''
+            }
+        );
     }
 
     async listarAprovacoes(

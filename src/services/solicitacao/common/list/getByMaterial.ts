@@ -1,13 +1,13 @@
 import { AppDataSource } from "../../../../loaders/database";
 import { Solicitacao } from "../../../../models/Solicitacao";
-import { SolicitacaoDTO } from "../../../../types/DTO";
+import { SolicitacaoDTO, SolicitacaoListItem } from "../../../../types/DTO";
 import { CampoOrganizadorService } from "../organization-data";
 
 export class GETAllMaterialMyIDGet {
     private solicitacaoRepo = AppDataSource.getRepository(Solicitacao);
 
 
-    public async obterSolicitacaoPorId(id: string): Promise<SolicitacaoDTO> {
+    public async obterSolicitacaoPorId(id: string): Promise<SolicitacaoListItem> {
         const solicitacao = await this.solicitacaoRepo.findOne({
             where: { id },
             relations: [
@@ -22,28 +22,37 @@ export class GETAllMaterialMyIDGet {
             throw new Error('Solicitação não encontrada');
         }
 
-        const dto: SolicitacaoDTO = {
+        const dto: SolicitacaoListItem = {
             id: solicitacao.id,
-            tipoSolicitacaoId: solicitacao.tipoSolicitacaoId,
-            numeroPedido: solicitacao.numeroPedido,
-            codeBalcao: solicitacao.codeBalcao,
-            direcao: solicitacao.direcao,
-            observacoes: solicitacao.observacoes,
-            aprovacoes: solicitacao.aprovacoes,
-            enviadoPor: solicitacao.enviadoPor,
-            campos: CampoOrganizadorService.organizarCamposSolicitacao(solicitacao.valores),
-            materiais: solicitacao.materiais.map(m => ({
-                id: m.id,
-                descricao: m.descricao,
-                quantidade: m.quantidade,
-                pn: m.pn,
-                marca: m.marca,
-                modelo: m.modelo,
-                estado: m.estado,
-                proveniencia: m.proveniencia,
-                destino: m.destino,
-            })),
-        };
+                tipoSolicitacaoId: solicitacao?.tipoSolicitacaoId,
+                 nomeSolicitacao: solicitacao?.tipoSolicitacao.nome,
+                numeroPedido: solicitacao.numeroPedido,
+                direcao: solicitacao.direcao,
+                observacoes: solicitacao.observacoes,
+                balcao: solicitacao.balcao ? await CampoOrganizadorService.formatarBalcao(solicitacao.balcao) : undefined,
+                aprovacoes: solicitacao.aprovacoes?.map(aprovacao => ({
+                    id: aprovacao.id,
+                    status: aprovacao.status,
+                    usuarioAprovadorId: aprovacao.usuarioAprovadorId,
+                    observacoes: aprovacao.observacoes,
+                    dataAprovacao: aprovacao.dataAprovacao
+                })) || [],
+                campos: CampoOrganizadorService.organizarCamposSolicitacao(solicitacao.valores || []),
+                materiais: solicitacao.materiais?.map(material => ({
+                    id: material.id,
+                    descricao: material.descricao,
+                    quantidade: material.quantidade,
+                    pn: material.pn,
+                    marca: material.marca,
+                    modelo: material.modelo,
+                    estado: material.estado,
+                    proveniencia: material.proveniencia,
+                    destino: material.destino
+                })) || [],
+                totalMateriais: solicitacao.materiais?.length || 0,
+                createdAt: solicitacao.createdAt,
+                updatedAt: solicitacao.updatedAt
+            }
 
         return dto;
     }

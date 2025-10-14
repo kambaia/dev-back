@@ -1,6 +1,8 @@
 // services/CampoOrganizadorService.ts
 
+import { Balcao } from "../../../../models/Balcao";
 import { ValorSolicitacao } from "../../../../models/ValorSolicitacao";
+import { SolicitacaoListItem } from "../../../../types/DTO";
 
 export class CampoOrganizadorService {
     /**
@@ -128,5 +130,29 @@ export class CampoOrganizadorService {
         });
 
         return campos;
+    }
+
+       // ✅ FORMATAR DADOS DO BALCÃO
+    public static async formatarBalcao(balcao: Balcao): Promise<SolicitacaoListItem['balcao']> {
+        return {
+            id: balcao.id,
+            nome: balcao.nome,
+            code_referencia: balcao.code_referencia,
+            provincia: balcao.provincia ?? '',
+            municipio: balcao.municipio?? '',
+            coordenada: balcao.coordenada??'',
+            enderecoCompleto: this.formatarEnderecoCompleto(balcao)
+        };
+    }
+
+    public static formatarEnderecoCompleto(balcao: Balcao): string {
+        const parts = [
+            balcao.rua,
+            balcao.bairro,
+            balcao.municipio,
+            balcao.provincia
+        ].filter(part => part && part.trim() !== '');
+
+        return parts.join(', ');
     }
 }
