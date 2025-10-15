@@ -6,20 +6,20 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import config from '../config';
 import { Exception } from '../Exception';
-import { User } from '../models/User';
+import { Utilizador } from '../models/user/Utilizador';
 
 @Service()
 export default class AuthService {
-  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+  constructor(@InjectRepository(Utilizador) private readonly userRepository: Repository<Utilizador>) {}
 
-  public async SignUp(inputUser: User): Promise<{ user: User; token: string }> {
+  public async SignUp(inputUser: Utilizador): Promise<{ user: Utilizador; token: string }> {
     try {
       const salt = randomBytes(32);
 
       /**
        * Hash password first
        */
-      const hashedPassword = await argon2.hash(inputUser.password, { salt });
+      const hashedPassword = await argon2.hash(inputUser.senhaHash, { salt });
       const userRecord = await this.userRepository.save({
         ...inputUser,
         salt: salt.toString('hex'),
@@ -43,7 +43,7 @@ export default class AuthService {
       Reflect.deleteProperty(user, 'password');
       Reflect.deleteProperty(user, 'salt');
       return { user, token };
-    } catch (error) {
+    } catch (error: any) {
       if (error.name === 'MongoError' && error.code === 11000) {
         // Duplicate username
         throw new Error('User already exist!');
@@ -53,7 +53,7 @@ export default class AuthService {
     }
   }
 
-  public async SignIn(email: string, password: string): Promise<{ user: User; token: string }> {
+  public async SignIn(email: string, password: string): Promise<{ user: Utilizador; token: string }> {
     const record = await this.userRepository.findOne({ where: { email } });
 
     if (!record) {
@@ -62,7 +62,7 @@ export default class AuthService {
     /**
      * We use verify from argon2 to prevent 'timing based' attacks
      */
-    const validPassword = await argon2.verify(record.password, password);
+    const validPassword = await argon2.verify(record.senhaHash, password);
     if (validPassword) {
       const token = this.generateToken(record);
       const user = record;
@@ -77,16 +77,14 @@ export default class AuthService {
     }
   }
 
-  private generateToken(user: User): string {
+  private generateToken(user: Utilizador): string {
     const today = new Date();
     const exp = new Date(today);
     exp.setDate(today.getDate() + 60);
 
     return jwt.sign(
       {
-        id: user.id, // We are gonna use this in the middleware 'isAuth'
-        role: user.role,
-        name: user.name,
+        ...user,
         exp: exp.getTime() / 1000,
       },
       config.jwtSecret,
