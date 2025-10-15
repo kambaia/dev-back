@@ -1,5 +1,5 @@
 import { AppDataSource } from "../../loaders/database";
-import { Balcoes } from "../../models/Balcao";
+import { Balcao } from "../../models/Balcao";
 
 
-export const BalcoesRepository = AppDataSource.getRepository(Balcoes);
+export const BalcoesRepository = AppDataSource.getRepository(Balcao);

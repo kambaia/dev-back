@@ -1,6 +1,6 @@
 export default {
   jwtSecret: process.env.JWT_SECRET || 'secret',
-  port: Number(process.env.PORT) || 3000,
+  port: Number(process.env.PORT) || 8000,
   database: {
     type: process.env.TYPEORM_CONNECTION || 'postgres',
     host: process.env.TYPEORM_HOST || 'localhost',

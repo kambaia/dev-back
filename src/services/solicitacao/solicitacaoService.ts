@@ -1,11 +1,11 @@
 import { AppDataSource } from '../../loaders/database';
+import { AprovacaoSolicitacao } from '../../models/AprovacaoSolicitacao';
 import { CampoSolicitacao, TipoCampo } from '../../models/CampoSolicitacao';
 import { MaterialSolicitacao } from '../../models/MaterialSolicitacao';
 import { Solicitacao } from '../../models/Solicitacao';
 import { TipoSolicitacao } from '../../models/TipoSolicitacao';
 import { ValorSolicitacao } from '../../models/ValorSolicitacao';
 import { CampoValorInputDTO, CriarSolicitacaoDTO, MaterialSolicitacaoDTO, SolicitacaoDTO } from '../../types/DTO';
-import { GETAllMaterialMyIDGet } from './common/list/getByMaterial';
 import { SolicitacaoUpdateService } from './common/update';
 
 export class SolicitacaoService {
@@ -14,6 +14,7 @@ export class SolicitacaoService {
     private campoSolicitacaoRepo = AppDataSource.getRepository(CampoSolicitacao);
     private valorSolicitacaoRepo = AppDataSource.getRepository(ValorSolicitacao);
     private materialSolicitacaoRepo = AppDataSource.getRepository(MaterialSolicitacao);
+    private Aprovacao = AppDataSource.getRepository(AprovacaoSolicitacao);
 
 
     private updateService: SolicitacaoUpdateService;
@@ -23,7 +24,7 @@ export class SolicitacaoService {
     }
 
 
-    async criarSolicitacao(dto: CriarSolicitacaoDTO): Promise<SolicitacaoDTO> {
+    async criarSolicitacao(dto: CriarSolicitacaoDTO): Promise<string> {
         // Verificar se o tipo existe
         const tipo = await this.tipoSolicitacaoRepo.findOne({
             where: { id: dto.tipoSolicitacaoId }
@@ -33,14 +34,30 @@ export class SolicitacaoService {
             throw new Error('Tipo de solicitação não encontrado');
         }
 
+        // Buscar campos existentes (agora já inclui os novos)
+        const existeSolicitacao = await this.solicitacaoRepo.findOne({
+            where: { numeroPedido: dto.numeroPedido }
+        });
+
+        console.log(existeSolicitacao);
+
+        if (existeSolicitacao) {
+            throw new Error('O número de pedido não pode ser igual');
+        }
+
         // Criar solicitação
         const solicitacao = new Solicitacao();
         solicitacao.tipoSolicitacaoId = dto.tipoSolicitacaoId;
         solicitacao.numeroPedido = dto.numeroPedido ?? '';
-        solicitacao.codeBalcao = dto.codeBalcao;
+        solicitacao.codeBalcao = dto.codeBalcao ?? '';
         solicitacao.observacoes = dto.observacoes ?? '';
+        solicitacao.direcao = dto.direcao;
 
-        await this.solicitacaoRepo.save(solicitacao);
+        const resultSolitacao = await this.solicitacaoRepo.save(solicitacao);
+        await this.Aprovacao.save({
+            ...dto.aprovacao,
+            solicitacao: { id: resultSolitacao.id } // ✅ cria FK corretamente
+        });
 
         // ✅ CADASTRAR CAMPOS DINAMICAMENTE conforme chegam na requisição
         await this.cadastrarCamposDinamicamente(dto.tipoSolicitacaoId, dto.campos);
@@ -118,10 +135,7 @@ export class SolicitacaoService {
             material.destino = materialDto.destino ?? '';
             await this.materialSolicitacaoRepo.save(material);
         }
-
-        const SolicitacaoMaterial = new GETAllMaterialMyIDGet();
-
-        return await SolicitacaoMaterial.obterSolicitacaoPorId(solicitacao.id);
+        return await solicitacao.id;
     }
 
 
@@ -130,7 +144,7 @@ export class SolicitacaoService {
         observacoes?: string;
         campos: CampoValorInputDTO[];
         materiais: MaterialSolicitacaoDTO[];
-    }): Promise<SolicitacaoDTO> {
+    }): Promise<string> {
         return await this.updateService.atualizarSolicitacao(id, updateData);
     }
 

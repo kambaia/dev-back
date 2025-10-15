@@ -11,20 +11,19 @@ export class SolicitacaoDTO {
     tipoSolicitacaoNome?: string;
     campos: any;
     materiais: MaterialSolicitacaoDTO[] = [];
-    aprovacoes?: AprovacaoDTO[]; // Adicionar informações de aprovação se necessário
+    aprovacoes: AprovacaoDTO[] =[]; // Adicionar informações de aprovação se necessário
 }
 
-export interface AprovacaoDTO {
-    id: string;
+export interface AprovacaoDTOCreate {
     solicitacaoId: string;
     status: StatusAprovacao;
     usuarioAprovadorId: string;
-    observacoes: string | null;
+    observacoes?: string;
     dataAprovacao: Date;
 }
 
 
-export interface AprovacaoDTOCreate {
+export interface  AprovacaoDTO{
     id: string;
     solicitacaoId: string;
     status: StatusAprovacao;
@@ -47,8 +46,9 @@ export class CriarSolicitacaoDTO {
     tipoSolicitacaoId: string;
     direcao: string;
     numeroPedido?: string;
-    codeBalcao: string;
+    codeBalcao?: string;
     observacoes?: string;
+    aprovacao: AprovacaoDTOCreate;
     campos: CampoValorInputDTO[] = [];
     materiais: MaterialSolicitacaoDTO[] = [];
 }
@@ -70,3 +70,72 @@ export class MaterialSolicitacaoDTO {
     proveniencia?: string;
     destino?: string;
 }
+
+
+
+// ✅ Interfaces Type-Safe
+export interface SolicitacaoFiltros {
+    tipoSolicitacaoId?: string;
+    status?: string;
+    numeroPedido?: string;
+    dataInicio?: Date;
+    dataFim?: Date;
+    balcaoId?: string;
+    codeBalcao?: string;
+    direcao?: string;
+    enviadoPor?: string;
+}
+
+export interface SolicitacaoListItem {
+    id: string;
+    tipoSolicitacaoId: string;
+    numeroPedido: string;
+    direcao: string;
+    observacoes: string;
+    nomeSolicitacao: string;
+    enviadoPor?: string;
+    balcao?: {
+        id: string;
+        nome: string;
+        code_referencia: string;
+        provincia?: string;
+        municipio?: string;
+        enderecoCompleto: string;
+        coordenada: string;
+    };
+    aprovacoes: Array<{
+        id: string;
+        status: string;
+        usuarioAprovadorId: string;
+        observacoes: string;
+        dataAprovacao: Date;
+    }>;
+    campos: any; // Ou defina uma interface específica
+    materiais: Array<{
+        id: string;
+        descricao: string;
+        quantidade: number;
+        pn: string;
+        marca: string;
+        modelo: string;
+        estado: string;
+        proveniencia: string;
+        destino: string;
+    }>;
+    totalMateriais: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface PaginatedResponse<T> {
+    solicitacoes: T[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+    };
+}
+

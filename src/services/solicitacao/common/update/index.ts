@@ -4,9 +4,7 @@ import { AppDataSource } from "../../../../loaders/database";
 import { MaterialSolicitacao } from "../../../../models/MaterialSolicitacao";
 import { Solicitacao } from "../../../../models/Solicitacao";
 import { ValorSolicitacao } from "../../../../models/ValorSolicitacao";
-import { CampoValorInputDTO, MaterialSolicitacaoDTO, SolicitacaoDTO } from "../../../../types/DTO";
-
-
+import { CampoValorInputDTO, MaterialSolicitacaoDTO } from "../../../../types/DTO";
 export class SolicitacaoUpdateService {
     private solicitacaoRepo = AppDataSource.getRepository(Solicitacao);
     private valorSolicitacaoRepo = AppDataSource.getRepository(ValorSolicitacao);
@@ -20,7 +18,7 @@ export class SolicitacaoUpdateService {
         observacoes?: string;
         campos: CampoValorInputDTO[];
         materiais: MaterialSolicitacaoDTO[];
-    }): Promise<SolicitacaoDTO> {
+    }): Promise<string> {
 
         // Buscar solicitação existente
         const solicitacao = await this.solicitacaoRepo.findOne({
@@ -47,7 +45,7 @@ export class SolicitacaoUpdateService {
         // 3. Atualizar materiais
         await this.atualizarMateriais(solicitacao.id, updateData.materiais);
 
-        return await this.obterSolicitacaoPorId(solicitacao.id);
+        return await solicitacao.id;
     }
 
     /**
@@ -150,54 +148,6 @@ export class SolicitacaoUpdateService {
         }
     }
 
-    /**
-     * Método auxiliar para buscar solicitação (igual ao existente)
-     */
-    private async obterSolicitacaoPorId(id: string): Promise<SolicitacaoDTO> {
-        const solicitacao = await this.solicitacaoRepo.findOne({
-            where: { id },
-            relations: [
-                'tipoSolicitacao',
-                'valores',
-                'valores.campoSolicitacao',
-                'materiais'
-            ]
-        });
-
-        if (!solicitacao) {
-            throw new Error('Solicitação não encontrada');
-        }
-
-        return {
-            id: solicitacao.id,
-            numeroPedido: solicitacao.numeroPedido,
-            status: solicitacao.status,
-            dataSolicitacao: solicitacao.dataSolicitacao,
-            dataConclusao: solicitacao.dataConclusao,
-            observacoes: solicitacao.observacoes,
-            tipoSolicitacaoId: solicitacao.tipoSolicitacaoId,
-            tipoSolicitacaoNome: solicitacao.tipoSolicitacao.nome,
-            materiais: solicitacao.materiais.map(m => ({
-                id: m.id,
-                descricao: m.descricao,
-                quantidade: m.quantidade,
-                pn: m.pn,
-                marca: m.marca,
-                modelo: m.modelo,
-                estado: m.estado,
-                proveniencia: m.proveniencia,
-                destino: m.destino,
-            })),
-            campos: solicitacao.valores.map(v => ({
-                nomeCampo: v.campoSolicitacao.nomeCampo,
-                tipoCampo: v.campoSolicitacao.tipoCampo,
-                obrigatorio: v.campoSolicitacao.obrigatorio,
-                ordem: v.campoSolicitacao.ordem,
-                valor: v.valor,
-                opcoes: v.campoSolicitacao.opcoes
-            })).sort((a, b) => a.ordem - b.ordem)
-        };
-    }
 
     private parseBoolean(valor: any): boolean {
         if (typeof valor === 'boolean') return valor;

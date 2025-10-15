@@ -1,7 +1,7 @@
 import { celebrate, Joi } from 'celebrate';
 import { NextFunction, Request, Response, Router } from 'express';
 import { Container } from 'typedi';
-import { User } from '../../../models/User';
+import { Utilizador } from '../../../models/user/Utilizador';
 import AuthService from '../../../services/auth';
 import middlewares from '../../middlewares';
 
@@ -12,7 +12,7 @@ const route = Router();
 //   constructor(@Inject(AuthService) private authService: AuthService) {}
 // }
 
-export default (app) => {
+export default (app:any) => {
   app.use('/auth', route);
 
   route.post(
@@ -27,7 +27,7 @@ export default (app) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const authServiceInstance = Container.get(AuthService);
-        const { user, token } = await authServiceInstance.SignUp(req.body as User);
+        const { user, token } = await authServiceInstance.SignUp(req.body as Utilizador);
         return res.json({ user, token }).status(201);
       } catch (e) {
         console.log(' error ', e);

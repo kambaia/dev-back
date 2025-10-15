@@ -40,7 +40,7 @@ export class AprovacaoSolicitacao {
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt!: Date;
     // Relations
-    @ManyToOne(() => Solicitacao, solicitacao => solicitacao.aprovacoes)
+    @ManyToOne(() => Solicitacao, solicitacao => solicitacao.aprovacoes, { onDelete: 'CASCADE'})
     @JoinColumn({ name: 'solicitacao_id' })
     solicitacao: Solicitacao;
 }

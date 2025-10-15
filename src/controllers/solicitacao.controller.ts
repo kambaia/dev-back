@@ -1,15 +1,15 @@
-import { Solicitacao } from './../models/Solicitacao';
+
 import { Request, Response } from 'express';
 import { SolicitacaoService } from '../services/solicitacao/solicitacaoService';
 import { CriarSolicitacaoDTO } from '../types/DTO';
 import { GETAllMaterialMyIDGet } from '../services/solicitacao/common/list/getByMaterial';
-import { GetAllSolicitacao } from '../services/solicitacao/common/list/getAllRequest';
+import { ListagemSolicitacaoServicos} from '../services/solicitacao/common/list/getAllRequest';
 
 
 
 const solicitacaoService = new SolicitacaoService();
 const SolicitacaoMaterial = new GETAllMaterialMyIDGet();
-const solicitacaoAll = new GetAllSolicitacao();
+const solicitacaoAll = new ListagemSolicitacaoServicos();
 
 export class SolicitacaoController {
     // ✅ CRIAÇÃO

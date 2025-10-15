@@ -1,4 +1,5 @@
-import { Balcoes } from "../../models/Balcao";
+
+import { Balcao } from "../../models/Balcao";
 import { BalcoesRepository } from "../../repositories/bolcoes/BalcoesRepository";
 import { ILike } from 'typeorm';
 
@@ -10,7 +11,7 @@ export class BalcoesService {
         provincia?: string;
         municipio?: string;
         bairro?: string;
-    }): Promise<{ data: Balcoes[]; total: number; page: number; limit: number }> {
+    }): Promise<{ data: Balcao[]; total: number; page: number; limit: number }> {
         const {
             page = 1,
             limit = 25,
@@ -50,17 +51,17 @@ export class BalcoesService {
         return { data, total, page, limit };
     }
 
-    async findById(id: string): Promise<Balcoes | null> {
+    async findById(id: string): Promise<Balcao | null> {
         return await BalcoesRepository.findOneBy({ id });
     }
 
-    async findByCodeReferencia(code_referencia: string): Promise<Balcoes | null> {
+    async findByCodeReferencia(code_referencia: string): Promise<Balcao | null> {
         return await BalcoesRepository.findOne({
             where: { code_referencia },
         });
     }
 
-    async create(data: Partial<Balcoes>): Promise<Balcoes> {
+    async create(data: Partial<Balcao>): Promise<Balcao> {
         const exists = await BalcoesRepository.findOne({
             where: { code_referencia: data.code_referencia },
         });
@@ -72,7 +73,7 @@ export class BalcoesService {
         return await BalcoesRepository.save(balcao);
     }
 
-    async update(id: string, data: Partial<Balcoes>): Promise<Balcoes> {
+    async update(id: string, data: Partial<Balcao>): Promise<Balcao> {
         const balcao = await BalcoesRepository.findOneBy({ id });
         if (!balcao) {
             throw new Error('Balcão não encontrado.');
