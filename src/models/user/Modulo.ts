@@ -10,6 +10,9 @@ export class Modulo {
     @Column({ length: 150 })
     nome: string;
 
+    @Column({ length: 50, unique: true })
+    codigo: string; // Ex: 'SOLICITACOES', 'UTILIZADORES'
+
     @Column({ length: 255, nullable: true })
     descricao: string;
 

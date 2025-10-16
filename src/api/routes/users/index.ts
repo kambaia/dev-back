@@ -1,15 +1,64 @@
-import { Request, Response, Router } from 'express';
-import middlewares from '../../middlewares';
+import { Router } from 'express';
 
-const route = Router();
+import { checkPermission } from '../../middlewares/auth.middleware';
+import UserController from '../../../controllers/userController.controller';
+
+const userController = new UserController();
+const router = Router();
 
 export default (app: Router) => {
-  app.use('/users', route);
+    app.use('/user', router); // prefixo geral
 
-  route.get(
-    '/me',
-    async (req: Request, res: Response) => {
-      return res.json({ user: req.currentUser }).status(200);
-    },
-  );
-};
+    // 👥 ROTAS DE UTILIZADORES
+    router.get('/',
+        userController.listarUtilizadores
+    );
+
+    router.get('/estatisticas',
+        checkPermission('utilizadores', 'view_all'),
+        userController.obterEstatisticas
+    );
+
+    router.get('/me',
+        userController.obterMeuPerfil
+    );
+
+    router.get('/direcao/:direcaoId',
+        checkPermission('utilizadores', 'view_direcao'),
+        userController.listarPorDirecao
+    );
+
+    router.get('/:id',
+        checkPermission('utilizadores', 'view_all'),
+        userController.obterUtilizador
+    );
+
+    router.get('/:id/permissoes',
+        checkPermission('utilizadores', 'view_all'),
+        userController.obterPermissoes
+    );
+
+    router.post('/',
+        userController.criarUtilizador
+    );
+
+    router.put('/:id',
+        checkPermission('utilizadores', 'edit'),
+        userController.atualizarUtilizador
+    );
+
+    router.patch('/:id/senha',
+        userController.atualizarSenha
+    );
+
+    router.patch('/:id/estado',
+        checkPermission('utilizadores', 'toggle_active'),
+        userController.atualizarEstado
+    );
+
+    router.delete('/:id',
+        checkPermission('utilizadores', 'delete'),
+        userController.eliminarUtilizador
+    );
+
+}
