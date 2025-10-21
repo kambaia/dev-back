@@ -46,6 +46,7 @@ export class UserService {
 
         const skip = (page - 1) * limit;
 
+
         const queryBuilder = this.userRepository.createQueryBuilder('utilizador')
             .leftJoinAndSelect('utilizador.perfil', 'perfil')
             .leftJoinAndSelect('utilizador.direcao', 'direcao')
@@ -90,8 +91,6 @@ export class UserService {
             nome: user.nome,
             email: user.email,
             estado: user.estado,
-            direcaoNome: user.direcao?.nome,
-            gabineteNome: user.gabinete?.nome,
             perfilNome: user.perfil?.nome,
             ultimoLogin: user.ultimoLogin
         }));
@@ -123,13 +122,81 @@ export class UserService {
         return this.mapearParaDTO(utilizador);
     }
 
-    // ✅ ENCONTRAR POR EMAIL
-    public async findByEmail(email: string): Promise<Utilizador | null> {
-        return await this.userRepository.findOne({
-            where: { email },
-            relations: ['perfil', 'direcao', 'gabinete', 'perfil.permissoes', 'perfil.permissoes.modulo', 'perfil.permissoes.acao']
-        });
+    public async findByEmail(email: string) {
+
+        const user = await this.userRepository
+            .createQueryBuilder('u')
+            .leftJoinAndSelect('u.perfil', 'p')
+            .leftJoinAndSelect('p.departamento', 'd')
+            .leftJoinAndSelect('d.direcao', 'dr')
+            .leftJoinAndSelect('d.gabinete', 'gb')
+            .leftJoinAndSelect('p.permissoes', 'perm')
+            .leftJoin('perm.modulo', 'mod')
+            .leftJoin('perm.acao', 'acao')
+            .addSelect(['mod.id', 'mod.nome', 'acao.id', 'acao.nome'])
+            .where('u.email = :email', { email })
+            .getOne();
+
+            console.log(user)
+
+        if (!user) return null;
+
+        // Transformar o formato das permissões
+        const permissoesMap = new Map<
+            string,
+            {
+                id: string;
+                nome: string;
+                sigla: string;
+                descricao: string;
+                acao: string[];
+            }
+        >();
+
+        for (const permissao of user.perfil.permissoes || []) {
+            const modulo = permissao.modulo;
+            if (!modulo) continue;
+
+            if (!permissoesMap.has(modulo.id)) {
+                permissoesMap.set(modulo.id, {
+                    id: modulo.id,
+                    nome: modulo.nome,
+                    sigla: modulo.sigla,
+                    descricao: modulo.descricao,
+                    acao: []
+                });
+            }
+
+            const moduloItem = permissoesMap.get(modulo.id)!;
+            if (permissao.acao?.nome) {
+                moduloItem.acao.push(permissao.acao.nome);
+            }
+        }
+
+
+
+        // Montar retorno com perfil + permissões dentro dele
+        const result = {
+            id: user.id,
+            nome: user.nome,
+            email: user.email,
+            telefone: user.telefone,
+            estado: user.estado,
+            senhaHash: user.senhaHash,
+            tipoAdmin: user.tipoAdmin,
+            perfil: {
+                id: user.perfil.id,
+                nome: user.perfil.nome,
+                descricao: user.perfil.descricao,
+                ativo: user.perfil.ativo,
+                permissoes: Array.from(permissoesMap.values())
+            }
+        };
+
+        return user;
     }
+
+
 
     // ✅ CRIAR UTILIZADOR
     // ✅ MÉTODO RECOMENDADO: Mais simples e direto
@@ -138,17 +205,12 @@ export class UserService {
         if (await this.emailExists(dto.email)) {
             throw new Error('Já existe um utilizador com este email');
         }
-
-        const a = await this.perfilRepository.findOne({ where: { id: dto.perfilId } });
-        console.log('direcao:', a);
         // Buscar entidades relacionadas
         const [direcao, gabinete, perfil] = await Promise.all([
             dto.direcaoId ? this.direcaoRepository.findOne({ where: { id: dto.direcaoId } }) : Promise.resolve(null),
             dto.gabineteId ? this.gabineteRepository.findOne({ where: { id: dto.gabineteId } }) : Promise.resolve(null),
             dto.perfilId ? this.perfilRepository.findOne({ where: { id: dto.perfilId } }) : Promise.resolve(null),
         ]);
-        console.log('dados:', direcao, gabinete, perfil);
-
         // Hash da senha
         const salt = await bcrypt.genSalt(12);
         const senhaHash = await bcrypt.hash(dto.senha, salt);
@@ -166,8 +228,6 @@ export class UserService {
 
 
         // Atribuir relações (apenas se existirem)
-        if (direcao) utilizador.direcao = direcao;
-        if (gabinete) utilizador.gabinete = gabinete;
         if (perfil) utilizador.perfil = perfil;
 
         // Salvar no banco de dados
@@ -284,17 +344,41 @@ export class UserService {
             throw new Error('Utilizador não encontrado');
         }
 
-        const permissoes = utilizador.perfil?.permissoes?.map(pp =>
-            `${pp.modulo.codigo}.${pp.acao.codigo}`
-        ) || [];
+        // Agrupar ações por módulo
+        const permissoesMap = new Map<string, string[]>();
 
+        for (const pp of utilizador.perfil?.permissoes || []) {
+            const moduloCodigo = pp.modulo?.sigla;
+            const acaoCodigo = pp.acao?.sigla;
+
+            if (!moduloCodigo || !acaoCodigo) continue;
+
+            if (!permissoesMap.has(moduloCodigo)) {
+                permissoesMap.set(moduloCodigo, []);
+            }
+
+            permissoesMap.get(moduloCodigo)!.push(acaoCodigo);
+        }
+
+        // Converter o Map para array final
+        const permissoes = Array.from(permissoesMap.entries()).map(([modulo, acoes]) => ({
+            modulo,
+            acoes
+        }));
+
+        // Converter tudo em um array plano de "MODULO.ACAO"
+        const permissoesPlanas = permissoes.flatMap(p =>
+            p.acoes.map(acao => `${p.modulo.toUpperCase()}.${acao.toUpperCase()}`)
+        );
+
+        // Resumo com base nas permissões planas
         const resumo = {
-            canViewAllSolicitacoes: permissoes.includes('SOLICITACOES.VIEW_ALL'),
-            canApproveSolicitacoes: permissoes.includes('SOLICITACOES.APPROVE'),
-            canManageUsers: permissoes.includes('UTILIZADORES.EDIT'),
-            canViewReports: permissoes.some(p => p.startsWith('RELATORIOS.')),
-            canManageMaterials: permissoes.some(p => p.startsWith('MATERIAIS.')),
-            canAudit: permissoes.some(p => p.startsWith('AUDITORIA.')),
+            canViewAllSolicitacoes: permissoesPlanas.includes('SOLICITACOES.VIEW_ALL'),
+            canApproveSolicitacoes: permissoesPlanas.includes('SOLICITACOES.APPROVE'),
+            canManageUsers: permissoesPlanas.includes('UTILIZADORES.EDIT'),
+            canViewReports: permissoesPlanas.some(p => p.startsWith('RELATORIOS.')),
+            canManageMaterials: permissoesPlanas.some(p => p.startsWith('MATERIAIS.')),
+            canAudit: permissoesPlanas.some(p => p.startsWith('AUDITORIA.')),
             isAdmin: utilizador.tipoAdmin || false
         };
 
@@ -304,68 +388,11 @@ export class UserService {
         };
     }
 
-    // ✅ VERIFICAR CREDENCIAIS
-    public async verificarCredenciais(email: string, password: string): Promise<Utilizador | null> {
-        const utilizador = await this.findByEmail(email);
-
-        if (!utilizador) {
-            return null;
-        }
-
-        const isPasswordValid = await bcrypt.compare(password, utilizador.senhaHash);
-
-        if (!isPasswordValid) {
-            return null;
-        }
-
-        return utilizador;
-    }
-
     // ✅ ATUALIZAR ÚLTIMO LOGIN
     public async atualizarUltimoLogin(id: string): Promise<void> {
         await this.userRepository.update(id, {
             ultimoLogin: new Date()
         });
-    }
-
-    // ✅ LISTAR POR DIREÇÃO
-    public async listarPorDirecao(direcaoId: string): Promise<UtilizadorListagemDTO[]> {
-        const utilizadores = await this.userRepository.find({
-            where: { direcao: { id: direcaoId } },
-            relations: ['perfil', 'gabinete'],
-            order: { nome: 'ASC' }
-        });
-
-        return utilizadores.map(user => ({
-            id: user.id,
-            nome: user.nome,
-            email: user.email,
-            estado: user.estado,
-            direcaoNome: user.direcao?.nome,
-            gabineteNome: user.gabinete?.nome,
-            perfilNome: user.perfil?.nome,
-            ultimoLogin: user.ultimoLogin
-        }));
-    }
-
-    // ✅ LISTAR POR GABINETE
-    public async listarPorGabinete(gabineteId: string): Promise<UtilizadorListagemDTO[]> {
-        const utilizadores = await this.userRepository.find({
-            where: { gabinete: { id: gabineteId } },
-            relations: ['perfil', 'direcao'],
-            order: { nome: 'ASC' }
-        });
-
-        return utilizadores.map(user => ({
-            id: user.id,
-            nome: user.nome,
-            email: user.email,
-            estado: user.estado,
-            direcaoNome: user.direcao?.nome,
-            gabineteNome: user.gabinete?.nome,
-            perfilNome: user.perfil?.nome,
-            ultimoLogin: user.ultimoLogin
-        }));
     }
 
     // ✅ LISTAR POR PERFIL
@@ -381,8 +408,6 @@ export class UserService {
             nome: user.nome,
             email: user.email,
             estado: user.estado,
-            direcaoNome: user.direcao?.nome,
-            gabineteNome: user.gabinete?.nome,
             perfilNome: user.perfil?.nome,
             ultimoLogin: user.ultimoLogin
         }));
@@ -440,16 +465,6 @@ export class UserService {
             emailVerificado: utilizador.emailVerificado,
             createdAt: utilizador.createdAt,
             updatedAt: utilizador.createdAt,
-            direcao: utilizador.direcao ? {
-                id: utilizador.direcao.id,
-                nome: utilizador.direcao.nome,
-                codigo: utilizador.direcao.codigo
-            } : undefined,
-            gabinete: utilizador.gabinete ? {
-                id: utilizador.gabinete.id,
-                nome: utilizador.gabinete.nome,
-                codigo: utilizador.gabinete.codigo
-            } : undefined,
             perfil: utilizador.perfil ? {
                 id: utilizador.perfil.id,
                 nome: utilizador.perfil.nome,

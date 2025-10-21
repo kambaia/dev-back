@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 import { PerfilPermissao } from './PerfilPermissao';
 import { Utilizador } from './Utilizador';
+import { Departamento } from './Departamento';
 
 @Entity('perfil')
 export class Perfil {
@@ -30,6 +31,11 @@ export class Perfil {
     @OneToMany(() => Utilizador, (user) => user.perfil)
     utilizadores: Utilizador[];
 
+    @ManyToOne(() => Departamento, (departamento) => departamento.utilizadores)
+    @JoinColumn({ name: "departamento_id" })
+    departamento: Departamento;
+
     @OneToMany(() => PerfilPermissao, (pp) => pp.perfil)
     permissoes: PerfilPermissao[];
+
 }

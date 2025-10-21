@@ -17,14 +17,15 @@ import { Perfil } from '../models/user/Perfil';
 import { PerfilPermissao } from '../models/user/PerfilPermissao';
 import { Acao } from '../models/user/Acao';
 import { Modulo } from '../models/user/Modulo';
+import seedDepartamentos from '../seeds/departamento.seed';
+import { Departamento } from '../models/user/Departamento';
+import seedDirecoesGabinetes from '../seeds/direcao-gabinete.seed';
 import { Gabinete } from '../models/user/Gabinete';
-import { seedAcoesCompletas } from '../seeds/seed-modulos-acoes';
-import seedPerfisDetalhados from '../seeds/seed-perfis';
-import { seedPerfisDirecoesEspeciais } from '../seeds/seedPerfisDirecoesEspeciais';
-import { seedDirecoesEspeciais } from '../seeds/seed-direcoes';
-
-
-useContainer(Container);
+import seedModulos from '../seeds/modulo.seed';
+import seedAcoes from '../seeds/seed-acoes';
+import utilizadorSeed from '../seeds/utilizador.seed';
+import perfilPermissaoSeed from '../seeds/perfilPermissao.seed';
+import perfilSeed from '../seeds/perfil.seed';
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
@@ -36,10 +37,11 @@ export const AppDataSource = new DataSource({
     synchronize: true,
     logging: false,
     entities: [
+        Perfil,
         Utilizador,
         Direcao,
         Gabinete,
-        Perfil,
+        Departamento,
         PerfilPermissao,
         Acao,
         Modulo,
@@ -78,11 +80,18 @@ export default async () => {
 
         // Executar seeds
         await seedTiposSolicitacao(AppDataSource);
-        await seedPerfisDirecoesEspeciais(AppDataSource);
-        await seedAcoesCompletas(AppDataSource);
-        await seedPerfisDetalhados(AppDataSource);
-        await seedPerfisDirecoesEspeciais(AppDataSource);
-        await seedDirecoesEspeciais(AppDataSource)
+
+
+        await seedDirecoesGabinetes(AppDataSource)
+        await seedDepartamentos(AppDataSource);
+        await
+            await seedModulos(AppDataSource);
+        await seedAcoes(AppDataSource);
+
+
+        await perfilPermissaoSeed(AppDataSource)
+        await perfilSeed(AppDataSource);
+        await utilizadorSeed(AppDataSource);
 
         return AppDataSource;
     } catch (error) {

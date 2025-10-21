@@ -5,10 +5,10 @@ import loaders from './loaders';
 async function main() {
   const app = express.default();
   await loaders(app);
-
-  app.listen(config.port, () => {
-    console.log(`Server is listening on port ${config.port}`);
-  });
+    app.listen(config.port, () => {
+      console.log(`🚀 Server running on http://localhost:${config.port}`);
+      console.log(`📘 Swagger docs available at http://localhost:${config.port}/docs`);
+    });
 
   // graceful shutdown
   process.on('SIGTERM', () => {

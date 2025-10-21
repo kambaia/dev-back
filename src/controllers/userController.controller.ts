@@ -213,33 +213,12 @@ export class UserController {
             });
         }
     }
-
-    // ✅ LISTAR POR DIREÇÃO
-    listarPorDirecao = async (req: Request, res: Response) => {
-        try {
-            const { direcaoId } = req.params;
-            const utilizadores = await this.userService.listarPorDirecao(direcaoId);
-
-            res.json({
-                success: true,
-                data: utilizadores
-            });
-
-        } catch (error) {
-            console.error('Erro ao listar utilizadores por direção:', error);
-            res.status(500).json({
-                success: false,
-                error: error instanceof Error ? error.message : 'Erro interno do servidor'
-            });
-        }
-    }
-
     // ✅ OBTER PERFIL DO UTILIZADOR AUTENTICADO
     obterMeuPerfil = async (req: Request, res: Response) => {
         try {
             // Supondo que o ID do utilizador está no req.user após autenticação
             const userId = (req as any).user?.id;
-
+            console.log(req.body);
             if (!userId) {
                 return res.status(401).json({
                     success: false,

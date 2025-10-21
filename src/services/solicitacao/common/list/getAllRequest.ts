@@ -32,6 +32,8 @@ export class ListagemSolicitacaoServicos {
         const options = this.construirOpcoesConsulta(skip, limit, filtros);
         const [solicitacoes, total] = await this.solicitacaoRepo.findAndCount(options);
 
+        console.log(solicitacoes);
+
         const solicitacoesProcessadas = await this.processarSolicitacoes(solicitacoes);
 
         return {
@@ -105,6 +107,7 @@ export class ListagemSolicitacaoServicos {
         const queryBuilder = this.solicitacaoRepo.createQueryBuilder('s')
             .leftJoinAndSelect('s.tipoSolicitacao', 'tipo')
             .leftJoinAndSelect('s.materiais', 'materiais')
+            .leftJoinAndSelect('s.enviadoPor', 'user')
             .leftJoinAndSelect('s.valores', 'valores')
             .leftJoinAndSelect('valores.campoSolicitacao', 'campo')
             .leftJoinAndSelect('s.aprovacoes', 'aprovacoes')
@@ -167,7 +170,7 @@ export class ListagemSolicitacaoServicos {
             solicitacoes.map(async (solicitacao) => ({
                 id: solicitacao.id,
                 tipoSolicitacaoId: solicitacao?.tipoSolicitacaoId,
-                 nomeSolicitacao: solicitacao?.tipoSolicitacao.nome,
+                nomeSolicitacao: solicitacao?.tipoSolicitacao.nome,
                 numeroPedido: solicitacao.numeroPedido,
                 direcao: solicitacao.direcao,
                 observacoes: solicitacao.observacoes,
