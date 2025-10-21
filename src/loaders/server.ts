@@ -3,9 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { errors, isCelebrateError, CelebrateError } from 'celebrate';
 import routes from '../api/routes';
-import { SolicitacaoController } from '../controllers/solicitacao.controller';
 
-const solicitacaoController = new SolicitacaoController();
 export default (app: express.Application) => {
   // 🧠 Configurações básicas
   app.enable('trust proxy');

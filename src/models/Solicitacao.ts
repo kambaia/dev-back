@@ -1,10 +1,11 @@
 // models/Solicitacao.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn, RelationId } from 'typeorm';
 import { TipoSolicitacao } from './TipoSolicitacao';
 import { ValorSolicitacao } from './ValorSolicitacao';
 import { MaterialSolicitacao } from './MaterialSolicitacao';
 import { AprovacaoSolicitacao } from './AprovacaoSolicitacao';
 import { Balcao } from './Balcao'; // ✅ Nova importação
+import { Utilizador } from './user/Utilizador';
 @Entity('solicitacoes')
 export class Solicitacao {
     @PrimaryGeneratedColumn('uuid')
@@ -12,7 +13,6 @@ export class Solicitacao {
 
     @Column({ name: 'tipo_solicitacao_id' })
     tipoSolicitacaoId: string;
-
     // ✅ ADICIONE ESTA COLUNA para a foreign key
     @Column({ name: 'balcao_id', type: 'uuid', nullable: true })
     codeBalcao: string;
@@ -22,9 +22,6 @@ export class Solicitacao {
 
     @Column({ name: 'direcao', length: 50, nullable: true })
     direcao: string;
-
-    @Column({ name: 'enviado_por', length: 50, nullable: true })
-    enviadoPor: string;
 
     @Column({ type: 'text', nullable: true })
     observacoes: string;
@@ -43,6 +40,14 @@ export class Solicitacao {
     @ManyToOne(() => Balcao, balcao => balcao.solicitacoes, { nullable: true })
     @JoinColumn({ name: 'balcao_id' })
     balcao: Balcao;
+
+
+    @ManyToOne(() => Utilizador)
+    @JoinColumn({ name: 'created_by' })
+    createdBy: Utilizador;
+
+    @RelationId((s: Solicitacao) => s.createdBy)
+    enviadoPor: string;
 
     @OneToMany(() => ValorSolicitacao, valor => valor.solicitacao)
     valores: ValorSolicitacao[];

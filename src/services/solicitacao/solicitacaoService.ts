@@ -39,7 +39,7 @@ export class SolicitacaoService {
             where: { numeroPedido: dto.numeroPedido }
         });
 
-        console.log(existeSolicitacao);
+
 
         if (existeSolicitacao) {
             throw new Error('O número de pedido não pode ser igual');
@@ -49,15 +49,18 @@ export class SolicitacaoService {
         const solicitacao = new Solicitacao();
         solicitacao.tipoSolicitacaoId = dto.tipoSolicitacaoId;
         solicitacao.numeroPedido = dto.numeroPedido ?? '';
-        solicitacao.codeBalcao = dto.codeBalcao ?? '';
+        solicitacao.enviadoPor = dto.enviadoPor,
         solicitacao.observacoes = dto.observacoes ?? '';
-        solicitacao.direcao = dto.direcao;
+
+          console.log("solicitacao", solicitacao);
 
         const resultSolitacao = await this.solicitacaoRepo.save(solicitacao);
         await this.Aprovacao.save({
             ...dto.aprovacao,
             solicitacao: { id: resultSolitacao.id } // ✅ cria FK corretamente
         });
+
+        console.log("Crei as solictação")
 
         // ✅ CADASTRAR CAMPOS DINAMICAMENTE conforme chegam na requisição
         await this.cadastrarCamposDinamicamente(dto.tipoSolicitacaoId, dto.campos);

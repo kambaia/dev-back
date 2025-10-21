@@ -1,40 +1,67 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, OneToMany, ManyToOne, Index } from 'typeorm';
 import { Acao } from './Acao';
 import { PerfilPermissao } from './PerfilPermissao';
+import { Departamento } from './Departamento'; // Assumindo que Departamento foi criado
+import { Utilizador } from './Utilizador'; // Para auditoria
 
 @Entity('modulo')
+@Index(['sigla'], { unique: true }) // Garante unicidade do código
 export class Modulo {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column({ length: 150 })
-    nome: string;
+  @Column({ length: 150 })
+  nome: string;
 
-    @Column({ length: 50, unique: true })
-    codigo: string; // Ex: 'SOLICITACOES', 'UTILIZADORES'
+  @Column({ length: 50, unique: true })
+  sigla: string; // Ex.: 'SOLICITACOES', 'UTILIZADORES', 'RELATORIOS', 'CONFIGURACOES', 'INVENTARIO', 'SUPORTE'
 
-    @Column({ length: 255, nullable: true })
-    descricao: string;
+  @Column({ length: 255, nullable: true })
+  descricao: string;
 
-    @Column({ length: 50, nullable: true })
-    icone: string;
+  @Column({ length: 50, nullable: true })
+  icone: string;
 
-    @Column({ default: true })
-    ativo: boolean;
+  @Column({ default: true })
+  ativo: boolean;
 
-    @Column({ default: 0 })
-    ordem: number;
+  @Column({ default: 0 })
+  ordem: number;
 
-    @CreateDateColumn({ name: 'created_at' })
-    createdAt: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-    @CreateDateColumn({ name: 'updated_at' })
-    updatedAt: Date;
+  @UpdateDateColumn({ name: 'updated_at' }) // Corrigido para UpdateDateColumn
+  updatedAt: Date;
 
-    // 🔗 RELACIONAMENTOS
-    @OneToMany(() => Acao, (acao) => acao.modulo)
-    acoes: Acao[];
+  @DeleteDateColumn({ name: 'deleted_at' }) // Adicionado soft delete
+  deletedAt?: Date;
 
-    @OneToMany(() => PerfilPermissao, (pp) => pp.modulo)
-    perfilPermissoes: PerfilPermissao[];
+  // Hierarquia de módulos
+  @Column({ nullable: true })
+  parentId?: string;
+
+  @ManyToOne(() => Modulo, { nullable: true, onDelete: 'SET NULL' })
+  parent?: Modulo;
+
+  @OneToMany(() => Modulo, (child) => child.parent)
+  children?: Modulo[];
+
+  // Auditoria
+  @ManyToOne(() => Utilizador, { nullable: true })
+  createdBy?: Utilizador;
+
+  @ManyToOne(() => Utilizador, { nullable: true })
+  updatedBy?: Utilizador;
+
+  // Relacionamentos
+  @OneToMany(() => Acao, (acao) => acao.modulo)
+  acoes: Acao[];
+
+  @OneToMany(() => PerfilPermissao, (pp) => pp.modulo)
+  perfilPermissoes: PerfilPermissao[];
+
+  // Link com Departamento (opcional, se módulos forem department-specific)
+  @ManyToOne(() => Departamento, (departamento) => departamento.modulos, { nullable: true })
+  departamento?: Departamento;
 }

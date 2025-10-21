@@ -101,8 +101,13 @@ export class UtilizadorListagemDTO {
 }
 
 // ✅ DTO PARA PERMISSÕES
+
 export class PermissoesUtilizadorDTO {
-    permissoes: string[];
+    permissoes: {
+        modulo: string;
+        acoes: string[];
+    }[];
+
     resumo: {
         canViewAllSolicitacoes: boolean;
         canApproveSolicitacoes: boolean;

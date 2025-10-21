@@ -11,6 +11,7 @@ import {
 import { Perfil } from './Perfil';
 import { Direcao } from './direcao';
 import { Gabinete } from './Gabinete';
+import { Departamento } from './Departamento';
 
 export enum EstadoUtilizador {
     ACTIVO = 'Activo',
@@ -67,13 +68,7 @@ export class Utilizador {
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
-    // 🔗 RELACIONAMENTOS
-    @ManyToOne(() => Direcao, (direcao) => direcao.utilizadores, { nullable: true })
-    direcao: Direcao;
-
-    @ManyToOne(() => Gabinete, (gabinete) => gabinete.utilizadores, { nullable: true })
-    gabinete: Gabinete;
-
     @ManyToOne(() => Perfil, (perfil) => perfil.utilizadores, { nullable: true })
     perfil: Perfil;
 }
+

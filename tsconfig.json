@@ -10,7 +10,6 @@
     "noEmit": false,
     "pretty": true,
     "resolveJsonModule": true,
-    "incremental": true,
 
     /* ===== Strict Type-Checking ===== */
     "strict": true,
@@ -34,7 +33,10 @@
     "emitDecoratorMetadata": true,
 
     /* ===== Type Roots ===== */
-    "typeRoots": ["./src/types", "./node_modules/@types"]
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+
+    /* ===== Included @types packages (empty = disable automatic inclusion) ===== */
+    "types": []
   },
 
   /* ===== Project Structure ===== */

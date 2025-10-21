@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn } from 'typeorm';
 import { Direcao } from './direcao';
 import { Utilizador } from './Utilizador';
+import { Departamento } from './Departamento';
 
 @Entity('gabinete')
 export class Gabinete {
@@ -11,7 +12,7 @@ export class Gabinete {
     nome: string;
 
     @Column({ length: 10, nullable: true })
-    codigo: string;
+    sigla: string;
 
     @Column({ length: 255, nullable: true })
     descricao: string;
@@ -25,10 +26,8 @@ export class Gabinete {
     @CreateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
-    // 🔗 RELACIONAMENTOS
-    @ManyToOne(() => Direcao, (d) => d.gabinetes, { onDelete: 'CASCADE' })
-    direcao: Direcao;
+    @OneToMany(() => Departamento, (departamento) => departamento.gabinete)
+    departamentos: Departamento[];
 
-    @OneToMany(() => Utilizador, (u) => u.gabinete)
-    utilizadores: Utilizador[];
+
 }

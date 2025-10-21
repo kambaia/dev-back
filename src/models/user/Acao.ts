@@ -14,7 +14,7 @@ export class Acao {
     descricao: string;
 
     @Column({ length: 50, nullable: true })
-    codigo: string; // Ex: 'CREATE', 'EDIT', 'DELETE'
+    sigla: string; // Ex: 'CREATE', 'EDIT', 'DELETE'
 
     @Column({ default: true })
     ativo: boolean;

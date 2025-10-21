@@ -44,6 +44,7 @@ export class CampoValorDTO {
 
 export class CriarSolicitacaoDTO {
     tipoSolicitacaoId: string;
+    enviadoPor: string;
     direcao: string;
     numeroPedido?: string;
     codeBalcao?: string;
