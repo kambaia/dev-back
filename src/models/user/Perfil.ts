@@ -10,10 +10,14 @@ export class Perfil {
     id: string;
 
     @Column({ length: 100 })
-    nome: string;
+    papel: string;
+
+    @Column({ length: 255, nullable: true })
+    restricao: string;
 
     @Column({ length: 255, nullable: true })
     descricao: string;
+
 
     @Column({ default: true })
     ativo: boolean;

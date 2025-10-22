@@ -44,6 +44,7 @@ export class CampoValorDTO {
 
 export class CriarSolicitacaoDTO {
     tipoSolicitacaoId: string;
+    tipoEnvio: boolean;
     enviadoPor: string;
     direcao: string;
     numeroPedido?: string;
@@ -87,14 +88,25 @@ export interface SolicitacaoFiltros {
     enviadoPor?: string;
 }
 
+
+export interface CreatedByMapped {
+    nome: string;
+    departamento: string;
+    sigla_departamento: string;
+    direcao: string;
+    sigla_direcao: string;
+    gabinete?: string;
+    sigla_gabinete?: string;
+}
+
 export interface SolicitacaoListItem {
     id: string;
     tipoSolicitacaoId: string;
     numeroPedido: string;
-    direcao: string;
+    tipoEnvio: boolean;
     observacoes: string;
     nomeSolicitacao: string;
-    enviadoPor?: string;
+    enviadoPor: CreatedByMapped;
     balcao?: {
         id: string;
         nome: string;
