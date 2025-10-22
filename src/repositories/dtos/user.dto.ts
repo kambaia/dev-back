@@ -1,4 +1,3 @@
-import { EstadoUtilizador } from "../../models/user/Utilizador";
 
 // ✅ DTO PARA CRIAR UTILIZADOR
 export class CriarUtilizadorDTO {
@@ -9,7 +8,7 @@ export class CriarUtilizadorDTO {
     direcaoId?: string;
     gabineteId?: string;
     perfilId?: string;
-    estado?: EstadoUtilizador;
+    estado?: boolean;
     avatar?: string;
 }
 
@@ -21,7 +20,7 @@ export class AtualizarUtilizadorDTO {
     direcaoId?: string;
     gabineteId?: string;
     perfilId?: string;
-    estado?: EstadoUtilizador;
+    estado?: true;
     avatar?: string;
     tipoAdmin?: boolean;
 }
@@ -45,7 +44,7 @@ export class FiltrosUtilizadorDTO {
     page?: number = 1;
     limit?: number = 10;
     search?: string;
-    estado?: EstadoUtilizador;
+    estado: boolean;
     direcaoId?: string;
     gabineteId?: string;
     perfilId?: string;
@@ -59,31 +58,14 @@ export class UtilizadorDTO {
     nome: string;
     email: string;
     telefone?: string;
-    estado: EstadoUtilizador;
+    estado: boolean;
     tipoAdmin: boolean;
     avatar?: string;
     ultimoLogin?: Date;
     emailVerificado: boolean;
     createdAt: Date;
     updatedAt: Date;
-
-    direcao?: {
-        id: string;
-        nome: string;
-        codigo?: string;
-    };
-
-    gabinete?: {
-        id: string;
-        nome: string;
-        codigo?: string;
-    };
-
-    perfil?: {
-        id: string;
-        nome: string;
-        descricao?: string;
-    };
+    perfil?:PerfilLoginMapeado
 
     permissoes?: string[];
 }
@@ -93,7 +75,7 @@ export class UtilizadorListagemDTO {
     id: string;
     nome: string;
     email: string;
-    estado: EstadoUtilizador;
+    estado: boolean;
     direcaoNome?: string;
     gabineteNome?: string;
     perfilNome?: string;
@@ -117,4 +99,19 @@ export class PermissoesUtilizadorDTO {
         canAudit: boolean;
         isAdmin: boolean;
     };
+}
+
+
+export interface PerfilLoginMapeado {
+    id: string;
+    papel: string;
+    descricao: string;
+    ativo: boolean;
+    isAdmin: boolean;
+    createdAt: string;
+    updatedAt: string;
+    nomeDepartamento: string;
+    siglaDepartamento: string;
+    nomeDirecao: string;
+    siglaDirecao: string;
 }

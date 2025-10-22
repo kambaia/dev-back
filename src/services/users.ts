@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 import { Direcao } from '../models/user/direcao';
 import { Gabinete } from '../models/user/Gabinete';
 import { Perfil } from '../models/user/Perfil';
-import { AtualizarSenhaDTO, AtualizarUtilizadorDTO, CriarUtilizadorDTO, FiltrosUtilizadorDTO, PermissoesUtilizadorDTO, UtilizadorDTO, UtilizadorListagemDTO } from '../repositories/dtos/user.dto';
+import { AtualizarSenhaDTO, AtualizarUtilizadorDTO, CriarUtilizadorDTO, FiltrosUtilizadorDTO, PerfilLoginMapeado, PermissoesUtilizadorDTO, UtilizadorDTO, UtilizadorListagemDTO } from '../repositories/dtos/user.dto';
 import { AppDataSource } from '../loaders/database';
 
 export class UserService {
@@ -90,7 +90,7 @@ export class UserService {
             id: user.id,
             nome: user.nome,
             email: user.email,
-            estado: user.estado,
+            estado: user.estado || true,
             perfilNome: user.perfil?.papel,
             ultimoLogin: user.ultimoLogin
         }));
@@ -137,7 +137,7 @@ export class UserService {
             .where('u.email = :email', { email })
             .getOne();
 
-            console.log(user)
+        console.log(user)
 
         if (!user) return null;
 
@@ -185,12 +185,8 @@ export class UserService {
             senhaHash: user.senhaHash,
             tipoAdmin: user.superAdmin,
             perfil: {
-                id: user.perfil.id,
-                nome: user.perfil.papel,
-                rescricao: user.perfil.restricao,
-                descricao: user.perfil.descricao,
-                ativo: user.perfil.ativo,
-                permissoes: Array.from(permissoesMap.values())
+                ...this.mapPerfilSeguro(user.perfil),
+                permissoes: [{ restricao: user.perfil.restricao, acesso: Array.from(permissoesMap.values()) }]
             }
         };
 
@@ -207,9 +203,7 @@ export class UserService {
             throw new Error('Já existe um utilizador com este email');
         }
         // Buscar entidades relacionadas
-        const [direcao, gabinete, perfil] = await Promise.all([
-            dto.direcaoId ? this.direcaoRepository.findOne({ where: { id: dto.direcaoId } }) : Promise.resolve(null),
-            dto.gabineteId ? this.gabineteRepository.findOne({ where: { id: dto.gabineteId } }) : Promise.resolve(null),
+        const [perfil] = await Promise.all([
             dto.perfilId ? this.perfilRepository.findOne({ where: { id: dto.perfilId } }) : Promise.resolve(null),
         ]);
         // Hash da senha
@@ -223,7 +217,7 @@ export class UserService {
         utilizador.telefone = dto.telefone ?? '';
         utilizador.senhaHash = senhaHash;
         utilizador.saltHash = salt;
-        utilizador.estado = dto.estado || EstadoUtilizador.ACTIVO;
+        utilizador.estado = dto.estado || true;
         utilizador.avatar = dto.avatar ?? '';
 
 
@@ -313,7 +307,7 @@ export class UserService {
     }
 
     // ✅ ATUALIZAR ESTADO
-    public async atualizarEstado(id: string, estado: EstadoUtilizador): Promise<UtilizadorDTO> {
+    public async atualizarEstado(id: string, estado: boolean): Promise<UtilizadorDTO> {
         await this.userRepository.update(id, {
             estado,
             updatedAt: new Date()
@@ -329,7 +323,7 @@ export class UserService {
             throw new Error('Utilizador não encontrado');
         }
         await this.userRepository.update(id, {
-            estado: EstadoUtilizador.INACTIVO,
+            estado: true,
             updatedAt: new Date()
         });
     }
@@ -466,12 +460,51 @@ export class UserService {
             emailVerificado: utilizador.emailVerificado,
             createdAt: utilizador.createdAt,
             updatedAt: utilizador.createdAt,
-            perfil: utilizador.perfil ? {
-                id: utilizador.perfil.id,
-                nome: utilizador.perfil.restricao,
-                descricao: utilizador.perfil.descricao
-            } : undefined
+            perfil: this.mapPerfilSeguro(utilizador.perfil)
         };
+    }
+
+    private mapPerfilSeguro(perfil: any): PerfilLoginMapeado {
+        try {
+            // Validação básica do objeto
+            if (!perfil || typeof perfil !== 'object') {
+                throw new Error('Perfil inválido');
+            }
+
+            const departamento = perfil.departamento;
+            const direcao = departamento?.direcao;
+
+            return {
+                id: perfil.id || '',
+                papel: perfil.papel || '',
+                descricao: perfil.descricao || '',
+                ativo: Boolean(perfil.ativo),
+                isAdmin: Boolean(perfil.isAdmin),
+                createdAt: perfil.createdAt || new Date().toISOString(),
+                updatedAt: perfil.updatedAt || new Date().toISOString(),
+                nomeDepartamento: departamento?.nome || 'N/A',
+                siglaDepartamento: departamento?.sigla || 'N/A',
+                nomeDirecao: direcao?.nome || 'N/A',
+                siglaDirecao: direcao?.sigla || 'N/A'
+            };
+        } catch (error) {
+            console.error('Erro ao mapear perfil:', error);
+            // Retorna um objeto padrão em caso de erro
+            return {
+                id: '',
+                papel: '',
+                descricao: '',
+                ativo: false,
+                isAdmin: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                nomeDepartamento: 'N/A',
+                siglaDepartamento: 'N/A',
+                nomeDirecao: 'N/A',
+                siglaDirecao: 'N/A'
+            };
+        }
+
     }
 }
 

@@ -21,15 +21,9 @@ export default class AuthService {
             id: utilizador.id,
             email: utilizador.email,
             perfilId: utilizador.perfil?.id,
-            tipoAdmin: utilizador.tipoAdmin,
         };
 
         const { accessToken, refreshToken } = gerarTokens(payload);
-
-        console.log(accessToken, refreshToken);
-
-        // Aqui você pode salvar o refresh token em Redis, base de dados, etc.
-        // await redisClient.set(`refresh:${utilizador.id}`, refreshToken, { EX: 7 * 24 * 3600 });
 
         return {
             utilizador,

@@ -9,7 +9,6 @@ export const gerarTokens = (utilizador: JwtPayload) => {
     id: utilizador.id,
     email: utilizador.email,
     perfilId: utilizador.perfil?.id,
-    tipoAdmin: utilizador.tipoAdmin
   };
 
   const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXP });
