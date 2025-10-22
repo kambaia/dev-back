@@ -18,7 +18,7 @@ export class UserService {
     // ✅ LISTAR TODOS OS UTILIZADORES (método existente)
     public async findAll(): Promise<Utilizador[]> {
         return await this.userRepository.find({
-            relations: ['perfil', 'direcao', 'gabinete']
+            relations: ['perfil']
         });
     }
 
@@ -91,7 +91,7 @@ export class UserService {
             nome: user.nome,
             email: user.email,
             estado: user.estado,
-            perfilNome: user.perfil?.nome,
+            perfilNome: user.perfil?.papel,
             ultimoLogin: user.ultimoLogin
         }));
 
@@ -183,17 +183,18 @@ export class UserService {
             telefone: user.telefone,
             estado: user.estado,
             senhaHash: user.senhaHash,
-            tipoAdmin: user.tipoAdmin,
+            tipoAdmin: user.superAdmin,
             perfil: {
                 id: user.perfil.id,
-                nome: user.perfil.nome,
+                nome: user.perfil.papel,
+                rescricao: user.perfil.restricao,
                 descricao: user.perfil.descricao,
                 ativo: user.perfil.ativo,
                 permissoes: Array.from(permissoesMap.values())
             }
         };
 
-        return user;
+        return result;
     }
 
 
@@ -379,7 +380,7 @@ export class UserService {
             canViewReports: permissoesPlanas.some(p => p.startsWith('RELATORIOS.')),
             canManageMaterials: permissoesPlanas.some(p => p.startsWith('MATERIAIS.')),
             canAudit: permissoesPlanas.some(p => p.startsWith('AUDITORIA.')),
-            isAdmin: utilizador.tipoAdmin || false
+            isAdmin: utilizador.superAdmin || false
         };
 
         return {
@@ -408,7 +409,7 @@ export class UserService {
             nome: user.nome,
             email: user.email,
             estado: user.estado,
-            perfilNome: user.perfil?.nome,
+            perfilNome: user.perfil?.papel,
             ultimoLogin: user.ultimoLogin
         }));
     }
@@ -459,7 +460,7 @@ export class UserService {
             email: utilizador.email,
             telefone: utilizador.telefone,
             estado: utilizador.estado,
-            tipoAdmin: utilizador.tipoAdmin,
+            tipoAdmin: utilizador.superAdmin,
             avatar: utilizador.avatar,
             ultimoLogin: utilizador.ultimoLogin,
             emailVerificado: utilizador.emailVerificado,
@@ -467,7 +468,7 @@ export class UserService {
             updatedAt: utilizador.createdAt,
             perfil: utilizador.perfil ? {
                 id: utilizador.perfil.id,
-                nome: utilizador.perfil.nome,
+                nome: utilizador.perfil.restricao,
                 descricao: utilizador.perfil.descricao
             } : undefined
         };

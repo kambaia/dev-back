@@ -1,7 +1,6 @@
 import { AppDataSource } from "../../../../loaders/database";
-import { Balcao } from "../../../../models/Balcao";
 import { Solicitacao } from "../../../../models/Solicitacao";
-import { PaginatedResponse, SolicitacaoFiltros, SolicitacaoListItem } from "../../../../types/DTO";
+import { CreatedByMapped, PaginatedResponse, SolicitacaoFiltros, SolicitacaoListItem } from "../../../../types/DTO";
 import { CampoOrganizadorService } from "../organization-data";
 
 import {
@@ -11,6 +10,7 @@ import {
     FindManyOptions,
     ILike
 } from "typeorm";
+
 
 export class ListagemSolicitacaoServicos {
     private solicitacaoRepo: Repository<Solicitacao> = AppDataSource.getRepository(Solicitacao);
@@ -32,8 +32,6 @@ export class ListagemSolicitacaoServicos {
         const options = this.construirOpcoesConsulta(skip, limit, filtros);
         const [solicitacoes, total] = await this.solicitacaoRepo.findAndCount(options);
 
-        console.log(solicitacoes);
-
         const solicitacoesProcessadas = await this.processarSolicitacoes(solicitacoes);
 
         return {
@@ -53,6 +51,7 @@ export class ListagemSolicitacaoServicos {
             relations: {
                 tipoSolicitacao: true,
                 materiais: true,
+                createdBy: { perfil: { departamento: { direcao: true, gabinete: true } } },
                 valores: {
                     campoSolicitacao: true
                 },
@@ -81,10 +80,6 @@ export class ListagemSolicitacaoServicos {
                 options.where.codeBalcao = ILike(`%${filtros.codeBalcao}%`);
             }
 
-            if (filtros.direcao) {
-                options.where.direcao = filtros.direcao;
-            }
-
             if (filtros.enviadoPor) {
                 options.where.enviadoPor = ILike(`%${filtros.enviadoPor}%`);
             }
@@ -97,72 +92,7 @@ export class ListagemSolicitacaoServicos {
         return options;
     }
 
-    // ✅ MÉTODO ALTERNATIVO COM QUERY BUILDER
-    private async construirQueryBuilder(
-        skip: number,
-        limit: number,
-        filtros?: SolicitacaoFiltros
-    ): Promise<[Solicitacao[], number]> {
 
-        const queryBuilder = this.solicitacaoRepo.createQueryBuilder('s')
-            .leftJoinAndSelect('s.tipoSolicitacao', 'tipo')
-            .leftJoinAndSelect('s.materiais', 'materiais')
-            .leftJoinAndSelect('s.enviadoPor', 'user')
-            .leftJoinAndSelect('s.valores', 'valores')
-            .leftJoinAndSelect('valores.campoSolicitacao', 'campo')
-            .leftJoinAndSelect('s.aprovacoes', 'aprovacoes')
-            .leftJoinAndSelect('s.balcao', 'balcao')
-            .orderBy('s.createdAt', 'DESC')
-            .skip(skip)
-            .take(limit);
-
-        // Aplicar filtros
-        this.aplicarFiltrosQueryBuilder(queryBuilder, filtros);
-
-        return await queryBuilder.getManyAndCount();
-    }
-
-    // ✅ APLICA FILTROS NO QUERY BUILDER
-    private aplicarFiltrosQueryBuilder(queryBuilder: any, filtros?: SolicitacaoFiltros): void {
-        if (!filtros) return;
-
-        if (filtros.tipoSolicitacaoId) {
-            queryBuilder.andWhere('s.tipoSolicitacaoId = :tipoId', {
-                tipoId: filtros.tipoSolicitacaoId
-            });
-        }
-
-        if (filtros.status) {
-            queryBuilder.andWhere('s.status = :status', {
-                status: filtros.status
-            });
-        }
-
-        if (filtros.numeroPedido) {
-            queryBuilder.andWhere('s.numeroPedido ILIKE :numeroPedido', {
-                numeroPedido: `%${filtros.numeroPedido}%`
-            });
-        }
-
-        if (filtros.balcaoId) {
-            queryBuilder.andWhere('s.balcaoId = :balcaoId', {
-                balcaoId: filtros.balcaoId
-            });
-        }
-
-        if (filtros.codeBalcao) {
-            queryBuilder.andWhere('s.codeBalcao ILIKE :codeBalcao', {
-                codeBalcao: `%${filtros.codeBalcao}%`
-            });
-        }
-
-        if (filtros.dataInicio && filtros.dataFim) {
-            queryBuilder.andWhere('s.createdAt BETWEEN :dataInicio AND :dataFim', {
-                dataInicio: filtros.dataInicio,
-                dataFim: filtros.dataFim
-            });
-        }
-    }
 
     // ✅ PROCESSAMENTO DOS DADOS
     private async processarSolicitacoes(solicitacoes: Solicitacao[]): Promise<SolicitacaoListItem[]> {
@@ -172,8 +102,9 @@ export class ListagemSolicitacaoServicos {
                 tipoSolicitacaoId: solicitacao?.tipoSolicitacaoId,
                 nomeSolicitacao: solicitacao?.tipoSolicitacao.nome,
                 numeroPedido: solicitacao.numeroPedido,
-                direcao: solicitacao.direcao,
+                tipoEnvio: solicitacao.tipoEnvio,
                 observacoes: solicitacao.observacoes,
+                enviadoPor: await this.mapSolicitacao(solicitacao.createdBy),
                 balcao: solicitacao.balcao ? await CampoOrganizadorService.formatarBalcao(solicitacao.balcao) : undefined,
                 aprovacoes: solicitacao.aprovacoes?.map(aprovacao => ({
                     id: aprovacao.id,
@@ -200,9 +131,26 @@ export class ListagemSolicitacaoServicos {
             }))
         );
     }
+    private mapSolicitacao(utelizador: any): CreatedByMapped {
+        const perfil = utelizador?.perfil;
+        const departamento = perfil?.departamento;
+        const direcao = departamento?.direcao;
+        const gabinete = departamento?.gabinete;
 
-
-
+        return {
+            nome: utelizador?.nome || '',
+            email: utelizador?.email || '',
+            telefone: utelizador?.telefone || '',
+            departamento: departamento?.nome || 'N/A',
+            sigla_departamento: departamento?.sigla || 'N/A',
+            direcao: direcao?.nome || 'N/A',
+            sigla_direcao: direcao?.sigla || 'N/A',
+            ...(gabinete && {
+                gabinete: gabinete.nome,
+                sigla_gabinete: gabinete.sigla
+            })
+        }
+    };
     // ✅ CÁLCULO DE PAGINAÇÃO
     private calcularPaginacao(page: number, limit: number, total: number) {
         const totalPages = Math.ceil(total / limit);
@@ -237,26 +185,4 @@ export class ListagemSolicitacaoServicos {
         return await this.listarSolicitacoes(page, limit, { balcaoId });
     }
 
-    // ✅ MÉTODO PARA BUSCAR DETALHES DE UMA SOLICITAÇÃO
-    async obterSolicitacaoPorId(id: string): Promise<SolicitacaoListItem | null> {
-        const solicitacao = await this.solicitacaoRepo.findOne({
-            where: { id },
-            relations: {
-                tipoSolicitacao: true,
-                materiais: true,
-                valores: {
-                    campoSolicitacao: true
-                },
-                aprovacoes: true,
-                balcao: true
-            }
-        });
-
-        if (!solicitacao) {
-            return null;
-        }
-
-        const [solicitacaoProcessada] = await this.processarSolicitacoes([solicitacao]);
-        return solicitacaoProcessada;
-    }
 }

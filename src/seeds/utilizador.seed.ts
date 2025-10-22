@@ -15,7 +15,7 @@ export default async function utilizadorSeed(dataSource: DataSource) {
     const senhaHash = await bcrypt.hash(password, salt);
 
     // 📘 Buscar perfis existentes
-    const perfilAdmin = await perfilRepo.findOne({ where: { nome: "Administrador do Sistema" } });
+    const perfilAdmin = await perfilRepo.findOne({ where: { papel: "Administrador do Sistema" } });
 
     // 👤 Lista de utilizadores padrão
     const utilizadoresSeed = [
@@ -25,7 +25,7 @@ export default async function utilizadorSeed(dataSource: DataSource) {
             telefone: "900000001",
             senhaHash,
             saltHash: salt,
-            tipoAdmin: true,
+            superAdmin: true,
             emailVerificado: true,
             perfil: perfilAdmin || undefined,
             perfil_id: '05a1d0ec-d270-4eb8-9297-edbae6ce8af3'

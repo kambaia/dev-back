@@ -4,6 +4,7 @@ import { CampoSolicitacao, TipoCampo } from '../../models/CampoSolicitacao';
 import { MaterialSolicitacao } from '../../models/MaterialSolicitacao';
 import { Solicitacao } from '../../models/Solicitacao';
 import { TipoSolicitacao } from '../../models/TipoSolicitacao';
+import { Utilizador } from '../../models/user/Utilizador';
 import { ValorSolicitacao } from '../../models/ValorSolicitacao';
 import { CampoValorInputDTO, CriarSolicitacaoDTO, MaterialSolicitacaoDTO, SolicitacaoDTO } from '../../types/DTO';
 import { SolicitacaoUpdateService } from './common/update';
@@ -49,10 +50,12 @@ export class SolicitacaoService {
         const solicitacao = new Solicitacao();
         solicitacao.tipoSolicitacaoId = dto.tipoSolicitacaoId;
         solicitacao.numeroPedido = dto.numeroPedido ?? '';
-        solicitacao.enviadoPor = dto.enviadoPor,
+        solicitacao.createdBy = { id: dto.enviadoPor } as Utilizador;
+        solicitacao.tipoEnvio = dto.tipoEnvio;
         solicitacao.observacoes = dto.observacoes ?? '';
+        solicitacao.codeBalcao = dto.codeBalcao ?? '';
 
-          console.log("solicitacao", solicitacao);
+
 
         const resultSolitacao = await this.solicitacaoRepo.save(solicitacao);
         await this.Aprovacao.save({

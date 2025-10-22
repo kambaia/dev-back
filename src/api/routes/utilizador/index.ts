@@ -12,7 +12,6 @@ export default (app: Router) => {
 
     // 👥 ROTAS DE UTILIZADORES
     router.get('/',
-
         userController.listarUtilizadores
     );
 

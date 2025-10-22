@@ -4,7 +4,7 @@ import { TipoSolicitacao } from './TipoSolicitacao';
 import { ValorSolicitacao } from './ValorSolicitacao';
 import { MaterialSolicitacao } from './MaterialSolicitacao';
 import { AprovacaoSolicitacao } from './AprovacaoSolicitacao';
-import { Balcao } from './Balcao'; // ✅ Nova importação
+import { Balcao } from './Balcao';
 import { Utilizador } from './user/Utilizador';
 @Entity('solicitacoes')
 export class Solicitacao {
@@ -20,11 +20,12 @@ export class Solicitacao {
     @Column({ name: 'numero_pedido', length: 50, unique: true, nullable: true })
     numeroPedido: string;
 
-    @Column({ name: 'direcao', length: 50, nullable: true })
-    direcao: string;
 
     @Column({ type: 'text', nullable: true })
     observacoes: string;
+
+    @Column({ name: 'tipo_envio', nullable: true })
+    tipoEnvio: boolean;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt!: Date;
@@ -42,12 +43,13 @@ export class Solicitacao {
     balcao: Balcao;
 
 
-    @ManyToOne(() => Utilizador)
+    @ManyToOne(() => Utilizador, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'created_by' })
     createdBy: Utilizador;
 
     @RelationId((s: Solicitacao) => s.createdBy)
     enviadoPor: string;
+
 
     @OneToMany(() => ValorSolicitacao, valor => valor.solicitacao)
     valores: ValorSolicitacao[];

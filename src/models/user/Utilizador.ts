@@ -5,14 +5,9 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     ManyToOne,
-    OneToMany,
 } from 'typeorm';
 
 import { Perfil } from './Perfil';
-import { Direcao } from './direcao';
-import { Gabinete } from './Gabinete';
-import { Departamento } from './Departamento';
-
 export enum EstadoUtilizador {
     ACTIVO = 'Activo',
     INACTIVO = 'Inactivo',
@@ -51,7 +46,7 @@ export class Utilizador {
     avatar: string;
 
     @Column({ name: 'tipo_admin', default: false })
-    tipoAdmin: boolean;
+    superAdmin: boolean;
 
     @Column({ name: 'ultimo_login', nullable: true })
     ultimoLogin: Date;
@@ -68,7 +63,7 @@ export class Utilizador {
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
-    @ManyToOne(() => Perfil, (perfil) => perfil.utilizadores, { nullable: true })
+    @ManyToOne(() => Perfil, (perfil) => perfil.utilizadores,  { nullable: true,onDelete: 'RESTRICT'})
     perfil: Perfil;
 }
 
