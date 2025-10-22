@@ -35,14 +35,7 @@ export default async function utilizadorSeed(dataSource: DataSource) {
     for (const userData of utilizadoresSeed) {
 
         const existe = await UtilizadorRepo.findOne({
-            where: { email: userData.email }, relations: [
-                'perfil',
-                'perfil.departamento',
-                'perfil.departamento.direcao',
-                'perfil.departamento.gabinete',
-                'perfil.permissoes',
-                'perfil.permissoes.modulo',
-            ],
+            where: { email: userData.email }
         });
         if (!existe) {
             const novo = UtilizadorRepo.create(userData);

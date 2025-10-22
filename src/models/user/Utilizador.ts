@@ -35,12 +35,8 @@ export class Utilizador {
     @Column({ name: 'salt_hash', length: 255 })
     saltHash: string;
 
-    @Column({
-        type: 'enum',
-        enum: EstadoUtilizador,
-        default: EstadoUtilizador.ACTIVO,
-    })
-    estado: EstadoUtilizador;
+    @Column({type: 'boolean', default: true})
+    estado: boolean;
 
     @Column({ type: 'text', nullable: true })
     avatar: string;
