@@ -15,7 +15,7 @@
     "test:cov": "jest --coverage"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=24.0.0"
   },
   "dependencies": {
     "argon2": "^0.31.1",

@@ -17,16 +17,14 @@ export class UserService {
 
     // ✅ LISTAR TODOS OS UTILIZADORES (método existente)
     public async findAll(): Promise<Utilizador[]> {
-        return await this.userRepository.find({
-            relations: ['perfil']
-        });
+        return await this.userRepository.find();
     }
 
     // ✅ ENCONTRAR UM UTILIZADOR (método existente)
     public async findOne(options: FindOneOptions<Utilizador>): Promise<Utilizador | null> {
         return await this.userRepository.findOne({
             ...options,
-            relations: ['perfil', 'direcao', 'gabinete', 'perfil.permissoes', 'perfil.permissoes.modulo', 'perfil.permissoes.acao']
+            relations: ['perfil', 'perfil.permissoes', 'perfil.permissoes.modulo', 'perfil.permissoes.acao']
         });
     }
 
@@ -49,8 +47,6 @@ export class UserService {
 
         const queryBuilder = this.userRepository.createQueryBuilder('utilizador')
             .leftJoinAndSelect('utilizador.perfil', 'perfil')
-            .leftJoinAndSelect('utilizador.direcao', 'direcao')
-            .leftJoinAndSelect('utilizador.gabinete', 'gabinete')
             .where('1=1');
 
         // 🔍 Aplicar filtros
@@ -64,13 +60,7 @@ export class UserService {
             queryBuilder.andWhere('utilizador.estado = :estado', { estado });
         }
 
-        if (direcaoId) {
-            queryBuilder.andWhere('utilizador.direcao.id = :direcaoId', { direcaoId });
-        }
-
-        if (gabineteId) {
-            queryBuilder.andWhere('utilizador.gabinete.id = :gabineteId', { gabineteId });
-        }
+        // Filtros de direcao e gabinete removidos pois não existem no modelo Utilizador
 
         if (perfilId) {
             queryBuilder.andWhere('utilizador.perfil.id = :perfilId', { perfilId });
@@ -112,7 +102,7 @@ export class UserService {
     public async obterUtilizadorPorId(id: string): Promise<UtilizadorDTO> {
         const utilizador = await this.userRepository.findOne({
             where: { id },
-            relations: ['perfil', 'direcao', 'gabinete', 'perfil.permissoes', 'perfil.permissoes.modulo', 'perfil.permissoes.acao']
+            relations: ['perfil', 'perfil.permissoes', 'perfil.permissoes.modulo', 'perfil.permissoes.acao']
         });
 
         if (!utilizador) {
@@ -234,7 +224,10 @@ export class UserService {
 
     // ✅ ATUALIZAR UTILIZADOR
     public async atualizarUtilizador(id: string, dto: AtualizarUtilizadorDTO): Promise<UtilizadorDTO> {
-        const utilizadorExistente = await this.userRepository.findOne({ where: { id } });
+        const utilizadorExistente = await this.userRepository.findOne({ 
+            where: { id },
+            relations: ['perfil']
+        });
 
         if (!utilizadorExistente) {
             throw new Error('Utilizador não encontrado');
@@ -245,34 +238,30 @@ export class UserService {
             throw new Error('Já existe um utilizador com este email');
         }
 
-        // Buscar entidades relacionadas se fornecidas
-        const updateData: any = { ...dto };
-
-        if (dto.direcaoId) {
-            updateData.direcao = await this.direcaoRepository.findOne({ where: { id: dto.direcaoId } });
-            if (!updateData.direcao) {
-                throw new Error('Direção não encontrada');
-            }
-        }
-
-        if (dto.gabineteId) {
-            updateData.gabinete = await this.gabineteRepository.findOne({ where: { id: dto.gabineteId } });
-            if (!updateData.gabinete) {
-                throw new Error('Gabinete não encontrado');
-            }
-        }
-
+        // Buscar perfil se fornecido
+        let perfil = null;
         if (dto.perfilId) {
-            updateData.perfil = await this.perfilRepository.findOne({ where: { id: dto.perfilId } });
-            if (!updateData.perfil) {
+            perfil = await this.perfilRepository.findOne({ where: { id: dto.perfilId } });
+            if (!perfil) {
                 throw new Error('Perfil não encontrado');
             }
         }
 
-        await this.userRepository.update(id, updateData);
-        const utilizadorAtualizado = await this.obterUtilizadorPorId(id);
+        // Atualizar apenas os campos fornecidos
+        if (dto.nome) utilizadorExistente.nome = dto.nome;
+        if (dto.email) utilizadorExistente.email = dto.email;
+        if (dto.telefone !== undefined) utilizadorExistente.telefone = dto.telefone;
+        if (dto.estado !== undefined) utilizadorExistente.estado = dto.estado;
+        if (dto.avatar !== undefined) utilizadorExistente.avatar = dto.avatar;
+        if (dto.tipoAdmin !== undefined) utilizadorExistente.superAdmin = dto.tipoAdmin;
 
-        return utilizadorAtualizado;
+        // Atualizar perfil se fornecido
+        if (perfil) utilizadorExistente.perfil = perfil;
+
+        // Salvar as alterações
+        const utilizadorAtualizado = await this.userRepository.save(utilizadorExistente);
+
+        return this.mapearParaDTO(utilizadorAtualizado);
     }
 
     // ✅ ATUALIZAR SENHA
@@ -394,7 +383,7 @@ export class UserService {
     public async listarPorPerfil(perfilId: string): Promise<UtilizadorListagemDTO[]> {
         const utilizadores = await this.userRepository.find({
             where: { perfil: { id: perfilId } },
-            relations: ['direcao', 'gabinete'],
+            relations: ['perfil'],
             order: { nome: 'ASC' }
         });
 
@@ -436,13 +425,14 @@ export class UserService {
 
     // ✅ VERIFICAR SE EMAIL EXISTE
     private async emailExists(email: string, excludeId?: string): Promise<boolean> {
-        const where: FindOptionsWhere<Utilizador> = { email };
+        const queryBuilder = this.userRepository.createQueryBuilder('utilizador')
+            .where('utilizador.email = :email', { email });
 
         if (excludeId) {
-            where.id = excludeId as any;
+            queryBuilder.andWhere('utilizador.id != :excludeId', { excludeId });
         }
 
-        const count = await this.userRepository.count({ where });
+        const count = await queryBuilder.getCount();
         return count > 0;
     }
 

@@ -37,7 +37,7 @@ export default async function perfilPermissaoSeed(dataSource: DataSource) {
           acao,
         });
         await perfilPermissaoRepo.save(novaPermissao);
-        console.log(`✅ Permissão criada: ${adminPerfil.nome} -> ${modulo.sigla} [${acao.sigla}]`);
+        console.log(`✅ Permissão criada: ${adminPerfil.papel} -> ${modulo.sigla} [${acao.sigla}]`);
       }
     }
   }

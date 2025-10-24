@@ -2,8 +2,11 @@ import { Departamento } from "../../models/user/Departamento";
 import { DepartamentoRepository } from "../../repositories/user/departamento.repository";
 
 export class DepartamentoService {
-  async listar(): Promise<Departamento[]> {
+  async listar(direcaoId?: string): Promise<Departamento[]> {
+    const whereCondition = direcaoId ? { direcao: { id: direcaoId } } : {};
+    
     return DepartamentoRepository.find({
+      where: whereCondition,
       relations: ["direcao", "gabinete", "modulos"],
       order: { createdAt: "DESC" },
     });

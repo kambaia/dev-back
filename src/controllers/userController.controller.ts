@@ -15,26 +15,14 @@ export class UserController {
     // ✅ LISTAR UTILIZADORES
     listarUtilizadores = async (req: Request, res: Response) => {
         try {
-            const filtros: FiltrosUtilizadorDTO = {
-                page: parseInt(req.query.page as string) || 1,
-                limit: parseInt(req.query.limit as string) || 10,
-                search: req.query.search as string,
-                estado: req.query.estado as any,
-                direcaoId: req.query.direcaoId as string,
-                gabineteId: req.query.gabineteId as string,
-                perfilId: req.query.perfilId as string,
-                sortBy: req.query.sortBy as string || 'nome',
-                sortOrder: (req.query.sortOrder as 'ASC' | 'DESC') || 'ASC'
-            };
-
-
-
-            const resultado = await this.userService.listarUtilizadores(filtros);
-            console.log('Filtros recebidos:', resultado);
+            // Método simples sem relações complexas
+            const utilizadores = await this.userService.userRepository.find({
+                select: ['id', 'nome', 'email', 'telefone', 'estado', 'createdAt', 'updatedAt']
+            });
+            
             res.json({
                 success: true,
-                data: resultado.utilizadores,
-                pagination: resultado.pagination
+                data: utilizadores
             });
 
         } catch (error) {
