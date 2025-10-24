@@ -20,6 +20,13 @@ export class UserService {
         return await this.userRepository.find();
     }
 
+    // ✅ LISTAR UTILIZADORES SIMPLES (sem relações complexas)
+    public async listarUtilizadoresSimples(): Promise<Utilizador[]> {
+        return await this.userRepository.find({
+            select: ['id', 'nome', 'email', 'telefone', 'estado', 'createdAt', 'updatedAt']
+        });
+    }
+
     // ✅ ENCONTRAR UM UTILIZADOR (método existente)
     public async findOne(options: FindOneOptions<Utilizador>): Promise<Utilizador | null> {
         return await this.userRepository.findOne({
@@ -119,7 +126,7 @@ export class UserService {
             .leftJoinAndSelect('u.perfil', 'p')
             .leftJoinAndSelect('p.departamento', 'd')
             .leftJoinAndSelect('d.direcao', 'dr')
-            .leftJoinAndSelect('d.gabinete', 'gb')
+            .leftJoinAndSelect('p.gabinete', 'gb')
             .leftJoinAndSelect('p.permissoes', 'perm')
             .leftJoin('perm.modulo', 'mod')
             .leftJoin('perm.acao', 'acao')

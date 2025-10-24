@@ -3,6 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, Ma
 import { PerfilPermissao } from './PerfilPermissao';
 import { Utilizador } from './Utilizador';
 import { Departamento } from './Departamento';
+import { Gabinete } from './Gabinete';
 
 @Entity('perfil')
 export class Perfil {
@@ -17,7 +18,6 @@ export class Perfil {
 
     @Column({ length: 255, nullable: true })
     descricao: string;
-
 
     @Column({ default: true })
     ativo: boolean;
@@ -38,6 +38,10 @@ export class Perfil {
     @ManyToOne(() => Departamento, (departamento) => departamento.utilizadores)
     @JoinColumn({ name: "departamento_id" })
     departamento: Departamento;
+
+    @ManyToOne(() => Gabinete, { nullable: true })
+    @JoinColumn({ name: "gabinete_id" })
+    gabinete: Gabinete;
 
     @OneToMany(() => PerfilPermissao, (pp) => pp.perfil)
     permissoes: PerfilPermissao[];

@@ -10,3 +10,4 @@ export default (app: Router) => {
     router.get("/", controller.listar);
     router.get("/:id", controller.buscar);
 }
+

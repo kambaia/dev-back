@@ -16,9 +16,7 @@ export class UserController {
     listarUtilizadores = async (req: Request, res: Response) => {
         try {
             // Método simples sem relações complexas
-            const utilizadores = await this.userService.userRepository.find({
-                select: ['id', 'nome', 'email', 'telefone', 'estado', 'createdAt', 'updatedAt']
-            });
+            const utilizadores = await this.userService.listarUtilizadoresSimples();
             
             res.json({
                 success: true,

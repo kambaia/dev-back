@@ -2,7 +2,6 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, Up
 import { Utilizador } from './Utilizador';
 import { Modulo } from './Modulo';
 import { Direcao } from './direcao';
-import { Gabinete } from './Gabinete';
 import { Perfil } from './Perfil';
 
 @Entity('departamento')
@@ -29,10 +28,6 @@ export class Departamento {
     @ManyToOne(() => Direcao, (direcao) => direcao.departamentos, { nullable: true })
     @JoinColumn({ name: "direcao_id" })
     direcao: Direcao;
-
-    @ManyToOne(() => Gabinete, (gabinete) => gabinete.departamentos, { nullable: true })
-    @JoinColumn({ name: "gabinete_id" })
-    gabinete: Gabinete;
 
 
     @OneToMany(() => Perfil, (perfil) => perfil.departamento)

@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn } from 'typeorm';
 import { Direcao } from './direcao';
 import { Utilizador } from './Utilizador';
-import { Departamento } from './Departamento';
+import { Perfil } from './Perfil';
 
 @Entity('gabinete')
 export class Gabinete {
@@ -26,8 +26,8 @@ export class Gabinete {
     @CreateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
-    @OneToMany(() => Departamento, (departamento) => departamento.gabinete)
-    departamentos: Departamento[];
+    @OneToMany(() => Perfil, (perfil) => perfil.gabinete)
+    perfis: Perfil[];
 
 
 }

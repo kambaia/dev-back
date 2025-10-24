@@ -51,7 +51,7 @@ export class ListagemSolicitacaoServicos {
             relations: {
                 tipoSolicitacao: true,
                 materiais: true,
-                createdBy: { perfil: { departamento: { direcao: true, gabinete: true } } },
+                createdBy: { perfil: { departamento: { direcao: true }, gabinete: true } },
                 valores: {
                     campoSolicitacao: true
                 },
@@ -135,7 +135,7 @@ export class ListagemSolicitacaoServicos {
         const perfil = utelizador?.perfil;
         const departamento = perfil?.departamento;
         const direcao = departamento?.direcao;
-        const gabinete = departamento?.gabinete;
+        const gabinete = perfil?.gabinete;
 
         return {
             nome: utelizador?.nome || '',

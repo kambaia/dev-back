@@ -8,7 +8,7 @@ export class PerfilService {
         relations: [
           "departamento", 
           "departamento.direcao", 
-          "departamento.gabinete",
+          "gabinete",
           "permissoes", 
           "permissoes.modulo", 
           "permissoes.acao"
@@ -66,13 +66,27 @@ export class PerfilService {
         }
       }
 
+      // Verificar se o gabinete existe
+      let gabineteRelacionado = null;
+      if (dados.gabinete) {
+        const { GabineteRepository } = await import('../../repositories/user/gabinete.repository');
+        gabineteRelacionado = await GabineteRepository.findOne({
+          where: { id: dados.gabinete }
+        });
+        
+        if (!gabineteRelacionado) {
+          throw new Error('Gabinete não encontrado');
+        }
+      }
+
       const novoPerfil = PerfilRepository.create({
         papel: dados.papel,
         descricao: dados.descricao || '',
         ativo: dados.ativo !== undefined ? dados.ativo : true,
         isAdmin: dados.isAdmin || false,
         restricao: dados.restricao || '',
-        departamento: departamentoRelacionado
+        departamento: departamentoRelacionado,
+        gabinete: gabineteRelacionado
       });
 
       return await PerfilRepository.save(novoPerfil);
